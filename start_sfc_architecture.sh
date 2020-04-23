@@ -91,6 +91,7 @@ CONTAINER2_IP="10.10.10.101"
 sudo docker stop $CONTAINER1 $CONTAINER2 2> /dev/null
 sudo docker rm $CONTAINER1 $CONTAINER2 2> /dev/null
 
+
 GATEWAY=ovsbr-pub
 VETH_GATEWAY=veth_public
 #GATEWAY_IP="192.168.1.1/16"
@@ -98,7 +99,9 @@ GATEWAY_IP="10.10.10.1"
 
 PRIVATE=ovsbr-int
 VETH_PRIVATE=veth_private
-#VETH_PRIVATE_IP="192.168.2.1" #although, it might not be necessary due to being a veth
+
+#cleanup
+sudo ip link del $VETH_PRIVATE > /dev/null 2>&1
 
 # TOPOLOGY
 #+---------+        +------------------+   
@@ -121,7 +124,7 @@ echo -e "${green}${done}[DONE]${none}"
 
 
 echo -en "${yellow}Creating veth pair to connect the bridges...${none}"
-ip link del $VETH_GATEWAY 2> /dev/null
+sudo ip link del $VETH_GATEWAY 2> /dev/null
 sudo ip link add $VETH_GATEWAY type veth peer name $VETH_PRIVATE
 retval=$?
 check_retval $retval
@@ -143,7 +146,9 @@ check_retval $retval
 
 
 echo -en "${yellow}Creating iptables rules for NAT between ${PUB_INTF} and ${GATEWAY} ${none}"
-echo 1 > /proc/sys/net/ipv4/ip_forward
+sudo echo 1 > /proc/sys/net/ipv4/ip_forward
+sudo iptables -F
+sudo iptables -t nat -F
 sudo iptables -t nat -A POSTROUTING -o $PUB_INTF -j MASQUERADE
 sudo iptables -A FORWARD -i $GATEWAY -j ACCEPT
 sudo iptables -A FORWARD -i $PUB_INTF -o $GATEWAY -m state --state RELATED,ESTABLISHED -j ACCEPT
@@ -198,10 +203,10 @@ echo -e "${green}${done}[DONE]${none}"
 
 
 echo -e "${yellow}Disabling checksum offloading on all virtual devices...${none}"
-for i in $(ip link |grep "@" |awk '{print $2}'|cut -d '@' -f 1) 
+for i in $(ip link |grep "@" |grep ovs-system| awk '{print $2}'|cut -d '@' -f 1) 
 do 
 	echo -en "\t${i}${none}\t"
-	ethtool -K $i tx off rx off 1> /dev/null
+	sudo ethtool -K $i tx off rx off 1> /dev/null
 	retval=$?
 	check_retval $retval
 done
