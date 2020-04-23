@@ -157,7 +157,7 @@ echo -e "${green}${done}[DONE]${none}"
 
 echo -e "${yellow}Starting two containers (${CONTAINER1},${CONTAINER2}) in privileged mode...${none}"
 echo -en "\tContainer ${CONTAINER1}...${none}"
-sudo docker run -dit --privileged --name=$CONTAINER1 --net=none --env="DISPLAY" --volume="$HOME/.Xauthority:/root/.Xauthority:rw" cslev/docker_firefox /docker_firefox/firefox/firefox
+sudo docker run -dit --rm --privileged --name=$CONTAINER1 --net=none -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/root/.Xauthority --hostname $(hostname) cslev/docker_firefox /docker_firefox/firefox/firefox
 retval=$?
 check_retval $retval
 
