@@ -1,7 +1,6 @@
 from scapy.all import * #sniff , send , sendp, IP,ARP,Ether,UDP,TCP,DNS,DNSQR
 from scapy.layers.dns import DNS, DNSRR, DNSQR
-from scapy.layers.tls import TLS
-
+from scapy.layers.tls.all import TLS
 import argparse
 
 
@@ -51,11 +50,9 @@ def filter_dns(packet):
 
 ## ============  DNS-over-HTTPS filtering ===========
 def filter_doh(packet):
-    if packet.haslayer(TLS):
-        sendp(packet, iface="eth0")
-        print("DoH Filter not implemented...FORWARDING")
-    else:
-        sendp(packet, iface="eth0")
+	sendp(packet, iface="eth0")
+	print("DoH Filter not implemented...FORWARDING")
+    
 ## ----- DNS-over-HTTPS filtering END ----------------
 
 
@@ -78,19 +75,19 @@ def filter_packets(packet):
 				sendp(packet, iface="eth0")
 				print("FORWARDING...")
 			## -------- FILTERING -------
-            else:
-            	##  ============ PURE DNS FILTERING ============
-                if(packet.haslayer(DNS) and filter_dns):
-                    filter_dns(packet)
-                ## ------- PURE DNS FILTERING END ------
+			else:
+				##  ============ PURE DNS FILTERING ============
+				if(packet.haslayer(DNS) and filter_dns):
+					filter_dns(packet)
+				## ------- PURE DNS FILTERING END ------
 
 				## ============  DNS-over-HTTPS filtering ===========
-                elif(packet.haslayer(TLS) and filter_doh):
-                    filter_doh(packet)
+				elif(packet.haslayer(TLS) and filter_doh):
+					filter_doh(packet)
 				## ----- DNS-over-HTTPS filtering END ----------------
-                else:
-                    sendp(packet, iface="eth0")
-    				print("FORWARDING...")
+				else:
+					sendp(packet, iface="eth0")
+					print("FORWARDING...")
 			####============== FILTERING ENDS ============####
 
 
