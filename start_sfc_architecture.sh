@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 {
 #COLORIZING
 none='\033[0m'
@@ -104,7 +102,7 @@ VETH_PRIVATE=veth_private
 sudo ip link del $VETH_PRIVATE > /dev/null 2>&1
 
 # TOPOLOGY
-#+---------+        +------------------+   
+#+---------+        +------------------+
 #| docker1 |        | docker2          |
 #+---------+        +------------------+
 #     |                  |            |
@@ -159,7 +157,7 @@ echo -e "${green}${done}[DONE]${none}"
 
 echo -e "${yellow}Starting two containers (${CONTAINER1},${CONTAINER2}) in privileged mode...${none}"
 echo -en "\tContainer ${CONTAINER1}...${none}"
-sudo docker run -dit --privileged --name=$CONTAINER1 --net=none cslev/debian_networking bash
+sudo docker run -dit --privileged --name=$CONTAINER1 --net=none --env="DISPLAY" --volume="$HOME/.Xauthority:/root/.Xauthority:rw" docker_firefox /docker_firefox/firefox/firefox
 retval=$?
 check_retval $retval
 
@@ -203,8 +201,8 @@ echo -e "${green}${done}[DONE]${none}"
 
 
 echo -e "${yellow}Disabling checksum offloading on all virtual devices...${none}"
-for i in $(ip link |grep "@" |grep ovs-system| awk '{print $2}'|cut -d '@' -f 1) 
-do 
+for i in $(ip link |grep "@" |grep ovs-system| awk '{print $2}'|cut -d '@' -f 1)
+do
 	echo -en "\t${i}${none}\t"
 	sudo ethtool -K $i tx off rx off 1> /dev/null
 	retval=$?
@@ -227,19 +225,3 @@ echo -en "${yellow}Copying filter.py to the / folder of container ${CONTAINER2}.
 sudo docker cp ./filter.py $CONTAINER2:/
 retval=$?
 check_retval $retval
-
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-

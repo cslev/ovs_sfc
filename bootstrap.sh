@@ -77,6 +77,10 @@ then
   sudo DEBIAN_FRONTEND=noninteractive apt-get update
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce docker-ce-cli containerd.io
 
+  echo -e "${yellow}Downloading docker images...${none}"
+  sudo docker pull cslev/debian_networking:latest
+  sudo docker pull cslev/docker_firefox:latest
+
   ############# OVS ################
   echo -e "${yellow}Installing ovs...${none}"
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y openvswitch-common openvswitch-switch
