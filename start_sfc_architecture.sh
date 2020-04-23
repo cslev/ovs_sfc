@@ -86,9 +86,12 @@ CONTAINER1_IP="10.10.10.100"
 CONTAINER2="filter"
 CONTAINER2_IP="10.10.10.101"
 
-sudo docker stop $CONTAINER1 $CONTAINER2 2> /dev/null
-sudo docker rm $CONTAINER1 $CONTAINER2 2> /dev/null
+sudo docker stop $CONTAINER1 2> /dev/null
+sudo docker stop $CONTAINER2 2> /dev/null
 
+
+sudo docker rm $CONTAINER1 2> /dev/null
+sudo docker rm $CONTAINER2 2> /dev/null
 
 GATEWAY=ovsbr-pub
 VETH_GATEWAY=veth_public
