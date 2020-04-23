@@ -1,6 +1,6 @@
 from scapy.all import * #sniff , send , sendp, IP,ARP,Ether,UDP,TCP,DNS,DNSQR
 from scapy.layers.dns import DNS, DNSRR, DNSQR
-from scapy.fields import Field
+from scapy.layers.tls import TLS
 
 import argparse
 
@@ -33,6 +33,34 @@ else:
     print("DNS-over-HTTPS needs to be blocked")
 
 
+##  ============ PURE DNS FILTERING ============
+def filter_dns(packet):
+    if packet.qdcount > 0 and isinstance(packet.qd, DNSQR):
+        #print("DNS query")
+        name = packet[DNSQR].qname
+        #print(name)
+        if(domain_to_filter in str(name)):
+            # DNS queries looking for domain_to_filter will be dropped
+            print("Gotcha {}  - DROP".format(domain_to_filter))
+        else:
+            # FORWARD every other DNS queries
+            sendp(packet, iface="eth0")
+            print("FORWARDING DNS query ({})...".format(name))
+## ------- PURE DNS FILTERING END ------
+
+
+## ============  DNS-over-HTTPS filtering ===========
+def filter_doh(packet):
+    if packet.haslayer(TLS):
+        sendp(packet, iface="eth0")
+        print("DoH Filter not implemented...FORWARDING")
+    else:
+        sendp(packet, iface="eth0")
+## ----- DNS-over-HTTPS filtering END ----------------
+
+
+
+
 def filter_packets(packet):
 	#Scapy cannot distinguish between incoming and outgoing packets, so
 	#to avoid infinite loop, let's change outgoing packet's MAC
@@ -50,34 +78,21 @@ def filter_packets(packet):
 				sendp(packet, iface="eth0")
 				print("FORWARDING...")
 			## -------- FILTERING -------
-			else:
-				##  ============ PURE DNS FILTERING ============
-				if(filter_dns):
-					if packet.haslayer(DNS):
-						if packet.qdcount > 0 and isinstance(packet.qd, DNSQR):
-							#print("DNS query")
-							name = packet[DNSQR].qname
-							#print(name)
-							if(domain_to_filter in str(name)):
-								# DNS queries looking for domain_to_filter will be dropped
-								print("Gotcha {}  - DROP".format(domain_to_filter))
-							else:
-								# FORWARD every other DNS queries
-								sendp(packet, iface="eth0")
-								print("FORWARDING DNS query ({})...".format(name))
-					elif(not filter_doh):
-						# FORWARD every IP packet which is not DNS queries
-						sendp(packet, iface="eth0")
-						print("FORWARDING NON-DNS packet")
-				## ------- PURE DNS FILTERING END ------
+            else:
+            	##  ============ PURE DNS FILTERING ============
+                if(packet.haslayer(DNS) and filter_dns):
+                    filter_dns(packet)
+                ## ------- PURE DNS FILTERING END ------
 
 				## ============  DNS-over-HTTPS filtering ===========
-				if(filter_doh):
-					sendp(packet, iface="eth0")
-					print("DoH Filter not implemented...FORWARDING")
+                elif(packet.haslayer(TLS) and filter_doh):
+                    filter_doh(packet)
 				## ----- DNS-over-HTTPS filtering END ----------------
+                else:
+                    sendp(packet, iface="eth0")
+    				print("FORWARDING...")
 			####============== FILTERING ENDS ============####
-			
+
 
 		elif(packet[0][1].dst == "10.10.10.101"):
 			# This host was the destination
