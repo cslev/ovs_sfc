@@ -196,7 +196,7 @@ check_retval $retval
 
 echo -en "${yellow}Add flow rules to make filter container to access the net withouth any restriction...${none}"
 #L3 routing between
-sudo ovs-ofctl add-flows ovsbr-int ovsbr-int.flows
+sudo ovs-ofctl add-flows ovsbr-int ovsbr-int-dnsfilter.flows
 echo -e "${green}${done}[DONE]${none}"
 
 
