@@ -1,4 +1,7 @@
-from scapy.all import * #sniff , send , sendp, IP,ARP,Ether,UDP,TCP,DNS,DNSQR
+#!/usr/bin/python3
+# coding: utf-8
+
+from scapy.all import sniff , send , sendp, IP
 from scapy.layers.dns import DNS, DNSRR, DNSQR
 from scapy.layers.tls.all import TLS
 import argparse
@@ -52,7 +55,7 @@ def filter_dns(packet):
 def filter_doh(packet):
 	sendp(packet, iface="eth0")
 	print("DoH Filter not implemented...FORWARDING")
-    
+
 ## ----- DNS-over-HTTPS filtering END ----------------
 
 
