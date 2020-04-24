@@ -46,7 +46,7 @@ def filter_dns_packets(packet):
       print("Gotcha {}  - DROP".format(domain_to_filter))
     else:
       # FORWARD every other DNS queries
-      sendp(packet, iface="eth0")
+      sendp(packet, iface="eth0", verbose=0)
       print("FORWARDING DNS query ({})...".format(name))
 ## ------- PURE DNS FILTERING END ------
 
@@ -75,7 +75,7 @@ def filter_packets(packet):
       ##------- NO FILTER ---------
       if(not filter_dns and not filter_doh):
         # FORWARD everything else
-        sendp(packet, iface="eth0")
+        sendp(packet, iface="eth0", verbose=0)
         print("FORWARDING without restriction")
       ## -------- FILTERING -------
       else:
@@ -89,7 +89,7 @@ def filter_packets(packet):
           filter_doh_packets(packet)
         ## ----- DNS-over-HTTPS filtering END ----------------
         else:
-          sendp(packet, iface="eth0")
+          sendp(packet, iface="eth0", verbose=0)
           print("FORWARDING non-DNS or non-TLS packets")
       ####============== FILTERING ENDS ============####
 

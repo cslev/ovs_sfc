@@ -37,7 +37,7 @@ function check_retval ()
     #echo -e "EXITING${none}"
     exit -1
   else
-    echo -e "${green}[DONE]${none}"
+    echo -e "\t${bold}${green}[DONE]${none}"
   fi
 }
 
@@ -111,11 +111,11 @@ sudo ip link del $VETH_PRIVATE > /dev/null 2>&1
 #     |                  |            |
 #10.10.10.100/24   10.10.10.101/24   / 10.10.10.102/24
 #     |                  |          /
-#+----------------------------------+						 +------------------------------+
-#|                            ______|						 |____                          |
-#| OVSBR-INT                 |veth0 -------------------------veth1|             OVSBR-PUB --------- INTERNET
-#|                            ------|						 |-----          10.10.10.1/24 |
-#+----------------------------------+					     +------------------------------+
+#+----------------------------------+                             +------------------------------+
+#|                            ______|                             |____                          |
+#| OVSBR-INT                 |veth0 ------------------------------veth1|                OVSBR-PUB---------- INTERNET
+#|                            ------|                             |-----          10.10.10.1/24  |
+#+----------------------------------+                             +------------------------------+
 
 
 echo -e "${yellow}Starting OVS bridges...${none}"
@@ -160,12 +160,20 @@ echo -e "${green}${done}[DONE]${none}"
 
 echo -e "${yellow}Starting two containers (${CONTAINER1},${CONTAINER2}) in privileged mode...${none}"
 echo -en "\tContainer ${CONTAINER1}...${none}"
-sudo docker run -dit --rm --privileged --name=$CONTAINER1 --net=none -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/root/.Xauthority --hostname $(hostname) cslev/docker_firefox /docker_firefox/firefox/firefox
+sudo docker run -dit --rm --name=$CONTAINER1 --net=none -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/root/.Xauthority --hostname $(hostname) cslev/docker_firefox "xterm -fn 10x20"
 retval=$?
 check_retval $retval
 
+echo -en "${yellow}Waiting xterm to show up"
+for i in {1..3}
+do
+  echo -en "."
+  sleep 1s
+done
+echo -en "${none}"
+
 echo -en "\tContainer ${CONTAINER2}...${none}"
-sudo docker run -dit --privileged --name=$CONTAINER2 --net=none cslev/debian_networking bash
+sudo docker run -dit --rm --privileged --name=$CONTAINER2 --net=none cslev/debian_networking bash
 retval=$?
 check_retval $retval
 echo -e "Use sudo docker ps to see their details and use sudo docker attach to get into them!\n"
@@ -180,7 +188,8 @@ echo -en "${yellow}Connecting port1 of ${CONTAINER2} to OVS (${PRIVATE})...${non
 sudo ./ovs-docker add-port $PRIVATE eth0 $CONTAINER2 --ipaddress=$CONTAINER2_IP/24 --gateway=$GATEWAY_IP
 retval=$?
 check_retval $retval
-#echo -en "${yellow}Connecting port2 of ${CONTAINER2} to OVS (${PRIVATE})..${none}"
+
+#echo -en "${yellow}Connecting port2 of ${CONTAINER2} to OVS (${PRIVATE})...${none}"
 #sudo ./ovs-docker add-port $PRIVATE eth1 $CONTAINER2
 #retval=$?
 #check_retval $retval
@@ -191,16 +200,20 @@ sudo ovs-ofctl del-flows $PRIVATE
 retval=$?
 check_retval $retval
 
-echo -en "${yellow}Add default ARP flow rule..${none}"
-sudo ovs-ofctl add-flow $PRIVATE "priority=1000,arp,actions=flood"
+
+echo -en "${yellow}Add flow rules to make filter container to access the net withouth any restriction...${none}"
+#L3 routing between
+sudo ovs-ofctl add-flows $PRIVATE ovsbr-int-dnsfilter.flows
 retval=$?
 check_retval $retval
 
 
-echo -en "${yellow}Add flow rules to make filter container to access the net withouth any restriction...${none}"
-#L3 routing between
-sudo ovs-ofctl add-flows ovsbr-int ovsbr-int-dnsfilter.flows
-echo -e "${green}${done}[DONE]${none}"
+echo -en "${yellow}Copying filter.py to the / folder of container ${CONTAINER2}...${none}"
+sudo docker cp ./filter.py $CONTAINER2:/
+retval=$?
+check_retval $retval
+
+
 
 
 echo -e "${yellow}Disabling checksum offloading on all virtual devices...${none}"
@@ -213,18 +226,14 @@ do
 done
 echo -e "${yellow}Disabling checksum offloading inside the containers...${none}"
 
-echo -en "${yellow}${CONTAINER1}${none}"
-sudo docker exec $CONTAINER1 ethtool -K eth0 tx off rx off 1> /dev/null
-retval=$?
-check_retval $retval
-
 echo -en "${yellow}${CONTAINER2}${none}"
 sudo docker exec $CONTAINER2 ethtool -K eth0 tx off rx off 1> /dev/null
 retval=$?
 check_retval $retval
 
+echo -en "${yellow}${CONTAINER1} is not in PRIVILEGED mode due to GUI-X11 requirements, skipping...${none}"
+#sudo docker exec $CONTAINER1 ethtool -K eth0 tx off rx off 1> /dev/null
+#retval=$?
+#check_retval $retval
+echo -e "\t${bold}${green}[DONE]${none}"
 
-echo -en "${yellow}Copying filter.py to the / folder of container ${CONTAINER2}...${none}"
-sudo docker cp ./filter.py $CONTAINER2:/
-retval=$?
-check_retval $retval
