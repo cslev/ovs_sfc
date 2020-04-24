@@ -76,7 +76,7 @@ def filter_packets(packet):
 			if(not filter_dns and not filter_doh):
 				# FORWARD everything else
 				sendp(packet, iface="eth0")
-				print("FORWARDING...")
+				print("FORWARDING without restriction")
 			## -------- FILTERING -------
 			else:
 				##  ============ PURE DNS FILTERING ============
