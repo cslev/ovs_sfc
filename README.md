@@ -5,7 +5,7 @@ Fire up two OVS instances and L2,L3, or even L4 Service Function Chaining on top
 1) Open vSwitch
 2) Docker
 
-## Install requirements (on a debian/ubuntu)
+## Install requirements (on debian/ubuntu)
 Simply run `bootstrap.sh -d debian/ubuntu`.
 ```
 chmod +x bootstrap.sh
