@@ -11,7 +11,7 @@ Simply run `bootstrap.sh -d debian/ubuntu`.
 chmod +x bootstrap.sh
 sudo ./bootstrap.sh -d debian
 ```
-For other systems, please adjust bootstrap.sh to support different repositories and install packages in a different way. It should be pretty straightforward
+For other systems, please adjust `bootstrap.sh` to support different repositories and install packages in a different way. It should be pretty straightforward
 
 
 # Playing with the scripts
