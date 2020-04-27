@@ -103,7 +103,7 @@ Now, we will do the same ping but from the `user`.
 ```
 <filter>: ping google.com
 ```
-You can see that tothing happens now as the DNS request is sent to the filter, which does nothing with the incoming packets (yet).
+You can see that nothing happens now as the DNS request is sent to the filter, which does nothing with the incoming packets (yet).
 Let's try with other tools as well to ensure I am not lying here :D
 ```
 <filter>: dig google.com
