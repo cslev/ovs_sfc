@@ -1,0 +1,46 @@
+AdGuard, https://dns.adguard.com/dns-query
+Google, https://dns.google/dns-query
+Cloudflare, https://cloudflare-dns.com/dns-query
+Quad9, https://dns.quad9.net/dns-query
+Cisco Umbrella/OpenDNS, https://doh.opendns.com/dns-query
+CleanBrowsing, https://doh.cleanbrowsing.org/doh/family-filter/
+Comcast, https://doh.xfinity.com/dns-query
+Cox, https://dohdot.coxlab.net/dns-query
+CZ.NIC, https://odvr.nic.cz/doh
+DNSlify, https://doh.dnslify.com/dns-query
+@chantra, https://dns.dnsoverhttps.net/dns-query
+@jedisct1, https://doh.crypto.sx/dns-query
+PowerDNS, https://doh.powerdns.org
+blahdns.com, https://doh-fi.blahdns.com/dns-query
+ffmuc.net, https://doh.ffmuc.net/dns-query
+NekomimiRouter.com, https://dns.dns-over-https.com/dns-query
+SecureDNS.eu, https://doh.securedns.eu/dns-query
+Rubyfish.cn, https://dns.rubyfish.cn/dns-query
+ContainerPI, https://dns.containerpi.com/dns-query
+@publicarray dns.seby.io, https://doh-2.seby.io/dns-query
+Commons Host, https://commons.host
+DnsWarden, https://doh.dnswarden.com/uncensored
+aaflalo.me, https://dns-nyc.aaflalo.me/dns-query
+Foundation for Applied Privacy, https://doh.applied-privacy.net/query
+captnemo.in, https://doh.captnemo.in/dns-query
+Tiarap, https://doh.tiar.app/dns-query
+DNS.SB, https://doh.dns.sb/dns-query
+FAELIX, https://rdns.faelix.net/
+doh.li, https://doh.li/dns-query
+armadillodns.net, https://doh.armadillodns.net/dns-query
+jp.tiar.app, https://jp.tiar.app/dns-query
+Association 42l, https://doh.42l.fr/dns-query
+Hostux.net, https://dns.hostux.net/dns-query
+Andrews & Arnold, https://dns.aa.net.uk/dns-query
+@matthewgall - mydns.network, https://adblock.mydns.network/dns-query
+ibksturm.synology.me, https://ibksturm.synology.me/dns-query
+jcdns.fun, https://jcdns.fun/dns-query
+@null31, https://ibuki.cgnat.net/dns-query
+TWNIC, https://dns.twnic.tw/dns-query
+blockerDNS, https://example.doh.blockerdns.com/dns-query
+Digitale Gesellschaft, https://dns.digitale-gesellschaft.ch/dns-query
+LibreDNS, https://doh.libredns.gr/dns-query
+pi-dns.com, https://doh.centraleu.pi-dns.com/dns-query
+dns.flatuslifir.is, https://dns.flatuslifir.is/dns-query
+CIRA Canadian Shield, https://family.canadianshield.cira.ca/dns-query
+Hurricane Electric (he.net), https://ordns.he.net/dns-query
