@@ -42,7 +42,7 @@ The purpose of this repository is to show how a basic service function chaining 
 - Flow rules in OVSBR-INT takes care of: 
   - making `user` and `filter` to be able to communicate
   - sending all other packets from `filter` towards the Internet without restriction
-  - sending all other packets BUT DNS packets towards the Internet without restriction
+  - sending all other packets BUT DNS packets from `user` towards the Internet without restriction
   - sending all DNS packets (destined to port 53) towards `filter`
 
 - `filter` should run `filter.py` application which can monitor DNS traffic and occasionally block a specific one if set (see details later)
