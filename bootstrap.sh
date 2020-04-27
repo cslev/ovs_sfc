@@ -29,11 +29,11 @@ lightcyan='\033[96m'
 function show_help
 {
   echo -e "${green}Example:./bootstrap.sh -d <DISTRO> ${none}"
-  echo -e "\t\t-s <DISTRO>: ubuntu or debian"
+  echo -e "\t\t-d <DISTRO>: ubuntu or debian"
   exit
 }
 
-DISTRO="debian"
+DISTRO=""
 while getopts "h?d:" opt
 do
   case "$opt" in
@@ -49,7 +49,13 @@ do
 esac
 done
 
-if [ "$DISTRO" == "debian" ] || [ "$DISTRO" == "ubuntu"]
+if [ "$DISTRO" == "" ]
+then
+  echo -e "${red}No distro has been set!"
+  show_help
+fi
+
+if [ "$DISTRO" == "debian" ] || [ "$DISTRO" == "ubuntu" ]
 then
   ############# DOCKER ################
   echo -e "${yellow}Installing docker...${none}"
@@ -87,6 +93,6 @@ then
   sudo systemctl disable openvswitch-switch
   sudo /etc/init.d/openvswitch-switch stop
 else
-  echo -e "${red}Unsupported distribution has been selected${none}"
-  exit
+  echo -e "${red}Unsupported distribution has been selected ($DISTRO)!${none}"
+  show_help  
 fi
