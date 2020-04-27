@@ -17,9 +17,9 @@ For other systems, please adjust `bootstrap.sh` to support different repositorie
 # Playing with the scripts
 ## Topology
 ```
-+---------+        +------------------+
-| user    |        | filter           |
-+---------+        +------------------+
++------+           +--------+
+| user |           | filter |
++------+           +--------+
      |                  |            
 10.10.10.100/24   10.10.10.101/24   
      |                  |          
