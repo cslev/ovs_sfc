@@ -111,15 +111,14 @@ Let's try with other tools as well to ensure I am not lying here :D
 It can be seen that `dig` also does not go through.
 
 
-Let's start our `filter.py` in `filter`
+Let's start our `filter.py` at `filter`.
 ```
 <filter>: python3 filter.py -f -d index.hu
 ```
 This will start the filter application that will let all DNS request through except the one which looks for `index.hu`.
 In other words, this system now implements a DNS-based content filtering most ISPs/censors/authoritarian governments apply nowadays (of course, not in the form of such a simply python script).
-It is difficult for such systems to block IPs since the list of possible IPs should be up-to-date. 
-However, this is a daunting task due to fact that nowadays CDNs are deployed (the same IP list in the USA may be different than the one in Singapore), and many web services are offloaded to the cloud (resulting in continuous IP address change).
-Therefore, pasive DNS data is used to monitor customer activities and do law enforcements.
+It is difficult for such systems to maintain a blocklist of IPs instead since that list has be up-to-date, which is a daunting task due to the following reasons. Nowadays, as CDNs are deployed (the same IP list in the USA may be different than the one in Singapore), and many web services are offloaded to the cloud IPs fluctuate in a daily or even an hour-to-hour bases.
+Therefore, pasive DNS data is used to monitor customer activities and do law enforcements subsequently.
 
 Let's do a `dig` or `ping` now at `user` for a domain that is not blocked, e.g., `google.com`.
 ```
@@ -148,7 +147,7 @@ google.com.		293	IN	A	172.217.194.113
 ;; WHEN: Mon Apr 27 09:28:50 UTC 2020
 ;; MSG SIZE  rcvd: 135
 ```
-As we can see, it works. Observer, on the other hand, the output at the `filter` terminal.
+As we can see, it works. Observe, at the same time, the output at the `filter`.
 ```
 FORWARDING DNS query (b'google.com.')...
 ```
@@ -158,7 +157,7 @@ Finally, do the same query at `user` but for the domain that supposed to be bloc
 ```
 <user>: dig index.hu
 ```
-As you can see, nothing really happens at the `user` because the queries for that domain are not forwarded at all.
+As you can see, nothing really happens at `user` because the queries for that domain are dropped at `filter`.
 
 Take a look at the output at `filter`:
 ```
