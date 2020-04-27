@@ -1,5 +1,6 @@
 #!/bin/bash
 
+ML_MODEL="model2_rf3.pkl"
 {
 #COLORIZING
 none='\033[0m'
@@ -47,11 +48,13 @@ function show_help
 
   echo -e "${green}Example: sudo ./start_sfc_architecture.sh -o <INTERNET_FACING_ETH>${none}"
   echo -e "\t\t-o <INTERNET_FACING_ETH>: The device name on your host/ in your VM used for accessing the INTERNET"
+  echo -e "\t\t-c: enable container based filtering"
   exit
 }
 
 PUB_INTF=""
-while getopts "h?o:" opt
+CONTAINER_BASED=0
+while getopts "h?o:c" opt
 do
   case "$opt" in
   h|\?)
@@ -59,6 +62,9 @@ do
     ;;
   o)
     PUB_INTF=$OPTARG
+    ;;
+  o)
+    CONTAINER_BASED=1
     ;;
   *)
     show_help
@@ -73,7 +79,7 @@ then
 	show_help
 fi
 
-echo -e "${yellow}Checking interface ${PUB_INTF}..."
+echo -e "${blue}Checking interface ${PUB_INTF}..."
 sudo ifconfig |grep $PUB_INTF 1> /dev/null
 retval=$?
 check_retval $retval
@@ -106,11 +112,11 @@ sudo ip link del $VETH_PRIVATE > /dev/null 2>&1
 
 # TOPOLOGY
 #+---------+        +------------------+
-#| docker1 |        | docker2          |
+#| user    |        | filter           |
 #+---------+        +------------------+
-#     |                  |            |
-#10.10.10.100/24   10.10.10.101/24   / 10.10.10.102/24
-#     |                  |          /
+#     |                  |            
+#10.10.10.100/24   10.10.10.101/24   
+#     |                  |          
 #+----------------------------------+                             +------------------------------+
 #|                            ______|                             |____                          |
 #| OVSBR-INT                 |veth0 ------------------------------veth1|                OVSBR-PUB---------- INTERNET
@@ -118,26 +124,26 @@ sudo ip link del $VETH_PRIVATE > /dev/null 2>&1
 #+----------------------------------+                             +------------------------------+
 
 
-echo -e "${yellow}Starting OVS bridges...${none}"
+echo -e "${blue}Starting OVS bridges...${none}"
 sudo ./start_ovs.sh -n $PRIVATE
 sudo ovs-vsctl add-br $GATEWAY
 echo -e "${green}${done}[DONE]${none}"
 
 
-echo -en "${yellow}Creating veth pair to connect the bridges...${none}"
+echo -en "${blue}Creating veth pair to connect the bridges...${none}"
 sudo ip link del $VETH_GATEWAY 2> /dev/null
 sudo ip link add $VETH_GATEWAY type veth peer name $VETH_PRIVATE
 retval=$?
 check_retval $retval
 
-echo -en "${yellow}Connecting bridges...${none}"
+echo -en "${blue}Connecting bridges...${none}"
 sudo ovs-vsctl add-port $GATEWAY $VETH_GATEWAY
 sudo ovs-vsctl add-port $PRIVATE $VETH_PRIVATE
 retval=$?
 check_retval $retval
 
 
-echo -en "${yellow}Setting up IP address for Internet access...${none}"
+echo -en "${blue}Setting up IP address for Internet access...${none}"
 sudo ifconfig $GATEWAY $GATEWAY_IP/24 up
 sudo ifconfig $VETH_PRIVATE up
 #sudo ifconfig $VETH_PRIVATE ${VETH_PRIVATE_IP}/24 up
@@ -146,7 +152,7 @@ retval=$?
 check_retval $retval
 
 
-echo -en "${yellow}Creating iptables rules for NAT between ${PUB_INTF} and ${GATEWAY} ${none}"
+echo -en "${blue}Creating iptables rules for NAT between ${PUB_INTF} and ${GATEWAY} ${none}"
 sudo echo 1 > /proc/sys/net/ipv4/ip_forward
 sudo iptables -F
 sudo iptables -t nat -F
@@ -158,13 +164,13 @@ echo -e "${green}${done}[DONE]${none}"
 
 
 
-echo -e "${yellow}Starting two containers (${CONTAINER1},${CONTAINER2}) in privileged mode...${none}"
-echo -en "\tContainer ${CONTAINER1}...${none}"
-sudo docker run -dit --rm --name=$CONTAINER1 --net=none -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/root/.Xauthority --hostname $(hostname) cslev/docker_firefox "xterm -fn 10x20"
+echo -e "${blue}Starting two containers (${CONTAINER1},${CONTAINER2}) in privileged mode...${none}"
+echo -en "\tStarting container ${CONTAINER1}...${none}"
+sudo docker run -dit --name=$CONTAINER1 --net=none -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/root/.Xauthority --hostname $(hostname) cslev/docker_firefox:selenium "xterm -fn 10x20"
 retval=$?
 check_retval $retval
 
-echo -en "${yellow}Waiting xterm to show up"
+echo -en "${blue}Adding some time to ${CONTAINER1}"
 for i in {1..3}
 do
   echo -en "."
@@ -172,51 +178,74 @@ do
 done
 echo -en "${none}"
 
-echo -en "\tContainer ${CONTAINER2}...${none}"
+echo -en "${blue}Testing whether ${CONTAINER1} is up and running"
+sudo docker ps -a |grep $CONTAINER1 > /dev/null 2>&1
+retval=$?
+check_retval $retval
+
+echo -en "\tStarting container ${CONTAINER2}...${none}"
 sudo docker run -dit --rm --privileged --name=$CONTAINER2 --net=none cslev/debian_networking bash
 retval=$?
 check_retval $retval
 echo -e "Use sudo docker ps to see their details and use sudo docker attach to get into them!\n"
 
-echo -en "${yellow}Connecting ${CONTAINER1} to OVS (${PRIVATE})...${none}"
+echo -en "${blue}Connecting ${CONTAINER1} to OVS (${PRIVATE})...${none}"
 sudo chmod +x ovs-docker
 sudo ./ovs-docker add-port $PRIVATE eth0 $CONTAINER1 --ipaddress=$CONTAINER1_IP/24 --gateway=$GATEWAY_IP
 retval=$?
 check_retval $retval
 
-echo -en "${yellow}Connecting port1 of ${CONTAINER2} to OVS (${PRIVATE})...${none}"
+echo -en "${blue}Connecting port1 of ${CONTAINER2} to OVS (${PRIVATE})...${none}"
 sudo ./ovs-docker add-port $PRIVATE eth0 $CONTAINER2 --ipaddress=$CONTAINER2_IP/24 --gateway=$GATEWAY_IP
 retval=$?
 check_retval $retval
 
-#echo -en "${yellow}Connecting port2 of ${CONTAINER2} to OVS (${PRIVATE})...${none}"
+#echo -en "${blue}Connecting port2 of ${CONTAINER2} to OVS (${PRIVATE})...${none}"
 #sudo ./ovs-docker add-port $PRIVATE eth1 $CONTAINER2
 #retval=$?
 #check_retval $retval
 
 
-echo -en "${yellow}Delete previous flow rules...${none}"
+echo -en "${blue}Delete previous flow rules...${none}"
 sudo ovs-ofctl del-flows $PRIVATE
 retval=$?
 check_retval $retval
 
 
-echo -en "${yellow}Add flow rules to make filter container to access the net withouth any restriction...${none}"
+echo -en "${blue}Add flow rules to ${PRIVATE}...${none}"
 #L3 routing between
-sudo ovs-ofctl add-flows $PRIVATE ovsbr-int-dnsfilter.flows
+if [ $CONTAINER_BASED -eq 1 ]
+then
+  sudo ovs-ofctl add-flows $PRIVATE ovsbr-int-dnsfilter.flows
+else
+  sudo ovs-ofctl add-flows $PRIVATE ovsbr-int-dnsfilter_local.flows
+fi
 retval=$?
 check_retval $retval
 
 
-echo -en "${yellow}Copying filter.py to the / folder of container ${CONTAINER2}...${none}"
+echo -en "${blue}Copying filter.py to the / folder of container ${CONTAINER2}...${none}"
 sudo docker cp ./filter.py $CONTAINER2:/
 retval=$?
 check_retval $retval
 
+echo -en "${blue}Copying ML model (${ML_MODEL}) to the / folder of container ${CONTAINER2}...${none}"
+sudo docker cp ./$ML_MODEL $CONTAINER2:/
+retval=$?
+check_retval $retval
+
+echo -en "${blue}Installing extra packages in ${CONTAINER2}...${none}"
+sudo docker exec filter apt-get update
+sudo docker exec filter apt-get install -y --no-install-recommends python3-numpy python3-sklearn
+retval=$?
+check_retval $retval
 
 
 
-echo -e "${yellow}Disabling checksum offloading on all virtual devices...${none}"
+
+
+
+echo -e "${blue}Disabling checksum offloading on all virtual devices...${none}"
 for i in $(ip link |grep "@" |grep ovs-system| awk '{print $2}'|cut -d '@' -f 1)
 do
 	echo -en "\t${i}${none}\t"
@@ -224,16 +253,13 @@ do
 	retval=$?
 	check_retval $retval
 done
-echo -e "${yellow}Disabling checksum offloading inside the containers...${none}"
+echo -e "${blue}Disabling checksum offloading inside the containers...${none}"
 
-echo -en "${yellow}${CONTAINER2}${none}"
+echo -en "${blue}in container ${CONTAINER2}...${none}"
 sudo docker exec $CONTAINER2 ethtool -K eth0 tx off rx off 1> /dev/null
 retval=$?
 check_retval $retval
 
-echo -en "${yellow}${CONTAINER1} is not in PRIVILEGED mode due to GUI-X11 requirements, skipping...${none}"
-#sudo docker exec $CONTAINER1 ethtool -K eth0 tx off rx off 1> /dev/null
-#retval=$?
-#check_retval $retval
-echo -e "\t${bold}${green}[DONE]${none}"
+echo -en "${blue}in container ${CONTAINER1}..."
+echo -e "${yellow} NOT IN PRIVILEGED mode due to GUI-X11 requirements, skipping...${none}"
 
