@@ -1,6 +1,5 @@
 #!/bin/bash
 
-ML_MODEL="model2_rf3.pkl"
 {
 #COLORIZING
 none='\033[0m'
@@ -48,7 +47,6 @@ function show_help
 
   echo -e "${green}Example: sudo ./start_sfc_architecture.sh -o <INTERNET_FACING_ETH>${none}"
   echo -e "\t\t-o <INTERNET_FACING_ETH>: The device name on your host/ in your VM used for accessing the INTERNET"
-  echo -e "\t\t-c: enable container based filtering"
   exit
 }
 
@@ -166,20 +164,7 @@ echo -e "${green}${done}[DONE]${none}"
 
 echo -e "${blue}Starting two containers (${CONTAINER1},${CONTAINER2}) in privileged mode...${none}"
 echo -en "\tStarting container ${CONTAINER1}...${none}"
-sudo docker run -dit --name=$CONTAINER1 --net=none -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/root/.Xauthority --hostname $(hostname) cslev/docker_firefox:selenium "xterm -fn 10x20"
-retval=$?
-check_retval $retval
-
-echo -en "${blue}Adding some time to ${CONTAINER1}"
-for i in {1..3}
-do
-  echo -en "."
-  sleep 1s
-done
-echo -en "${none}"
-
-echo -en "${blue}Testing whether ${CONTAINER1} is up and running"
-sudo docker ps -a |grep $CONTAINER1 > /dev/null 2>&1
+sudo docker run -dit --rm --privileged --name=$CONTAINER1 --net=none cslev/debian_networking bash
 retval=$?
 check_retval $retval
 
@@ -200,12 +185,6 @@ sudo ./ovs-docker add-port $PRIVATE eth0 $CONTAINER2 --ipaddress=$CONTAINER2_IP/
 retval=$?
 check_retval $retval
 
-#echo -en "${blue}Connecting port2 of ${CONTAINER2} to OVS (${PRIVATE})...${none}"
-#sudo ./ovs-docker add-port $PRIVATE eth1 $CONTAINER2
-#retval=$?
-#check_retval $retval
-
-
 echo -en "${blue}Delete previous flow rules...${none}"
 sudo ovs-ofctl del-flows $PRIVATE
 retval=$?
@@ -214,12 +193,7 @@ check_retval $retval
 
 echo -en "${blue}Add flow rules to ${PRIVATE}...${none}"
 #L3 routing between
-if [ $CONTAINER_BASED -eq 1 ]
-then
-  sudo ovs-ofctl add-flows $PRIVATE ovsbr-int-dnsfilter.flows
-else
-  sudo ovs-ofctl add-flows $PRIVATE ovsbr-int-dnsfilter_local.flows
-fi
+sudo ovs-ofctl add-flows $PRIVATE ovsbr-int-dnsfilter.flows
 retval=$?
 check_retval $retval
 
@@ -228,21 +202,6 @@ echo -en "${blue}Copying filter.py to the / folder of container ${CONTAINER2}...
 sudo docker cp ./filter.py $CONTAINER2:/
 retval=$?
 check_retval $retval
-
-echo -en "${blue}Copying ML model (${ML_MODEL}) to the / folder of container ${CONTAINER2}...${none}"
-sudo docker cp ./$ML_MODEL $CONTAINER2:/
-retval=$?
-check_retval $retval
-
-echo -en "${blue}Installing extra packages in ${CONTAINER2}...${none}"
-sudo docker exec filter apt-get update
-sudo docker exec filter apt-get install -y --no-install-recommends python3-numpy python3-sklearn
-retval=$?
-check_retval $retval
-
-
-
-
 
 
 echo -e "${blue}Disabling checksum offloading on all virtual devices...${none}"
@@ -255,11 +214,13 @@ do
 done
 echo -e "${blue}Disabling checksum offloading inside the containers...${none}"
 
+echo -en "${blue}in container ${CONTAINER1}...${none}"
+sudo docker exec $CONTAINER1 ethtool -K eth0 tx off rx off 1> /dev/null
+retval=$?
+check_retval $retval
+
 echo -en "${blue}in container ${CONTAINER2}...${none}"
 sudo docker exec $CONTAINER2 ethtool -K eth0 tx off rx off 1> /dev/null
 retval=$?
 check_retval $retval
-
-echo -en "${blue}in container ${CONTAINER1}..."
-echo -e "${yellow} NOT IN PRIVILEGED mode due to GUI-X11 requirements, skipping...${none}"
 
